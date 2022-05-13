@@ -484,6 +484,85 @@ class FileSpecTest {
     )
   }
 
+  @Test
+  fun aliasedImportsNestedClass1() {
+    val source = FileSpec.builder("com.squareup.tacos", "A")
+      .addType(
+        TypeSpec.classBuilder("A")
+          .addSuperinterface(ClassName("com.squareup.anotherpackage", "A", "B"))
+          .build()
+      )
+      .addAliasedImport(ClassName("com.squareup.anotherpackage", "A"), "OtherA")
+      .build()
+    assertThat(source.toString()).isEqualTo(
+      """
+      |package com.squareup.tacos
+      |
+      |import com.squareup.anotherpackage.A as OtherA
+      |
+      |public class A : OtherA.B
+      |""".trimMargin()
+    )
+  }
+
+  @Test
+  fun aliasedImportsNestedClass2() {
+    val source = FileSpec.builder("com.squareup.tacos", "A")
+      .addType(
+        TypeSpec.classBuilder("A")
+          .addSuperinterface(ClassName("com.squareup.anotherpackage", "A"))
+          .addType(
+            TypeSpec.classBuilder("B")
+              .addSuperinterface(ClassName("com.squareup.anotherpackage", "A", "B"))
+              .build()
+          )
+          .build()
+      )
+      .addAliasedImport(ClassName("com.squareup.anotherpackage", "A"), "OtherA")
+      .build()
+    assertThat(source.toString()).isEqualTo(
+      """
+      |package com.squareup.tacos
+      |
+      |import com.squareup.anotherpackage.A as OtherA
+      |
+      |public class A : OtherA {
+      |  public class B : OtherA.B
+      |}
+      |""".trimMargin()
+    )
+  }
+
+  @Test
+  fun aliasedImportsNestedClass3() {
+    val source = FileSpec.builder("com.squareup.tacos", "A")
+      .addType(
+        TypeSpec.classBuilder("A")
+          .addSuperinterface(ClassName("com.squareup.anotherpackage", "A"))
+          .addType(
+            TypeSpec.classBuilder("B")
+              .addSuperinterface(ClassName("com.squareup.anotherpackage", "A", "B"))
+              .build()
+          )
+          .build()
+      )
+      .addAliasedImport(ClassName("com.squareup.anotherpackage", "A"), "OtherA")
+      .addAliasedImport(ClassName("com.squareup.anotherpackage", "A", "B"), "OtherB")
+      .build()
+    assertThat(source.toString()).isEqualTo(
+      """
+      |package com.squareup.tacos
+      |
+      |import com.squareup.anotherpackage.A.B as OtherB
+      |import com.squareup.anotherpackage.A as OtherA
+      |
+      |public class A : OtherA {
+      |  public class B : OtherB
+      |}
+      |""".trimMargin()
+    )
+  }
+
   @Test fun conflictingParentName() {
     val source = FileSpec.builder("com.squareup.tacos", "A")
       .addType(
